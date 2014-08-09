@@ -11,7 +11,8 @@ The assumption, however, is that the data is available and in the current workin
 
 In the code chunk below, libraries are loaded for plotting using ggplot, the input data is read, rows with steps data unavailable are removed, the number of steps by day are summed.
 
-```{r}
+
+```r
 # COMMENT : download and untar the files 
 # url <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip'
 # download.file(url, destfile="./repdata-data-activity.zip",method="curl")
@@ -31,14 +32,14 @@ inputMinusNA <- input[!(is.na(input$steps)),]
 # determine the sum of steps from the remaining data set
 freqs <- aggregate(inputMinusNA$steps, by=list(inputMinusNA$date), FUN=sum)
 freqs$names <- as.Date(freqs$Group.1, format="%Y-%m-%d")
-
 ```
 
 ## What is mean total number of steps taken per day?
 
 In the code chunk below, the data is plotted in a histogram and the mean and median steps taken are determined.
 
-```{r fig.height=10, fig.width=10}
+
+```r
 # create histogram
 ggplot(freqs, aes(x=names, y=x)) + geom_bar(stat="identity") +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +  
@@ -46,21 +47,25 @@ ggplot(freqs, aes(x=names, y=x)) + geom_bar(stat="identity") +
     labs(x = "Date",
          y = "Steps",
          title = "Total Steps by Date")
+```
 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+
+```r
 theMean <- mean(freqs$x)
 theMedian <- median(freqs$x)
-
 ```
 
 ### Mean and Median
 
-When the NA values are omitted, the mean steps by date is `r theMean` and the median is `r theMedian`.
+When the NA values are omitted, the mean steps by date is 1.0766 &times; 10<sup>4</sup> and the median is 10765.
 
 ## average daily activity pattern
 
 In the code chunk below, the average number of steps by 5 minute interval are determined and plotted using a line graph, and the 5 minute interval with the max number of steps is determined.
 
-```{r fig.height=10, fig.width=10}
+
+```r
 byInterval <- aggregate(inputMinusNA$steps, by=list(inputMinusNA$interval), FUN=mean)
 
 ggplot(byInterval) + geom_line(aes(x=Group.1, y=x)) +
@@ -69,7 +74,11 @@ ggplot(byInterval) + geom_line(aes(x=Group.1, y=x)) +
     labs(x = "5 Minute Interval",
          y = "Average Steps Taken",
          title = "Average Number of Steps Taken by Five Minute Interval",col="")         
+```
 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+
+```r
 theMax <- byInterval[ which(byInterval$x==(max(byInterval$x))),]$Group.1
 ```
 
@@ -81,15 +90,28 @@ A summary is done over the input data set to show the count of NAs, but the valu
 
 The NA values are replaced, summaries are generated, total steps by day are plotted and the dayType (weekday or weekend) factor is created for later use.
 
-```{r fig.height=10, fig.width=10}
+
+```r
 library(mice)
 
 countNA <- nrow(input[is.na(input$steps),])
 
 ### NOTE: could also have ouput the NA count using Summary, as shown below
 summary(input)
+```
 
+```
+##      steps            date               interval   
+##  Min.   :  0.0   Min.   :2012-10-01   Min.   :   0  
+##  1st Qu.:  0.0   1st Qu.:2012-10-16   1st Qu.: 589  
+##  Median :  0.0   Median :2012-10-31   Median :1178  
+##  Mean   : 37.4   Mean   :2012-10-31   Mean   :1178  
+##  3rd Qu.: 12.0   3rd Qu.:2012-11-15   3rd Qu.:1766  
+##  Max.   :806.0   Max.   :2012-11-30   Max.   :2355  
+##  NA's   :2304
+```
 
+```r
 ## Using Predictive mean matching and the mice package to replace NA values in steps
 steps <- input$steps
 intervals <- input$interval
@@ -107,7 +129,11 @@ ggplot(adjustedFreqs, aes(x=names, y=x)) + geom_bar(stat="identity") +
     labs(x = "Date",
          y = "Steps",
          title = "Total Steps by Date With Predicted Missing Values")
+```
 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+
+```r
 adjustedMean <- mean(adjustedFreqs$x)
 adjustedMedian <- median(adjustedFreqs$x)
 
@@ -121,20 +147,20 @@ inputAdjusted$dayType <- sapply(weekdays(inputAdjusted$date), switch,
                                  "Friday"    = "Weekday")
 
 inputAdjusted$dayType <- as.factor(inputAdjusted$dayType)
-
 ```
 
 ### Count of NAs
 
-The number of NAs in the input data is `r countNA`.
+The number of NAs in the input data is 2304.
 
 ### Adjusted Mean and Median
 
-When the NA values are simulated, the mean steps by day becomes `r adjustedMean` and the median becomes `r adjustedMedian` (compared to previous mean/median values of `r theMean`/`r theMedian`.
+When the NA values are simulated, the mean steps by day becomes 1.0988 &times; 10<sup>4</sup> and the median becomes 11162 (compared to previous mean/median values of 1.0766 &times; 10<sup>4</sup>/10765.
 
 In order to (easily) create a panel graph with ggplot, the following function is used:
 
-``` {r fig.height=10, fig.width=10}
+
+```r
 ## create multiplot function
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   require(grid)
@@ -170,7 +196,6 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
-
 ```
 
 ## Weekdays versus Weekends
@@ -179,7 +204,8 @@ In the final code chunk, the adjusted (replaced NA values) data is split by week
 
 
 
-```{r fig.height=10, fig.width=10}
+
+```r
 ### Create Weekends Data Set
 weekends <- sample(inputAdjusted[inputAdjusted$dayType=="Weekend",])
 
@@ -207,4 +233,6 @@ p2 <- ggplot(weekdayInterval) + geom_line(aes(x=Group.1, y=x)) +
 
 multiplot(p1, p2, cols=1)
 ```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
 
